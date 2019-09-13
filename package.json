@@ -1,0 +1,36 @@
+{
+  "name": "liquidity-particles",
+  "version": "1.0.0",
+  "description": "Particle Physics Engine and Renderer",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm run clean && webpack",
+    "docs": "typedoc --name \"Liquidity v${npm_package_version}\"  --categorizeByGroup --exclude '**/index.ts'  --excludeNotExported --out ./docs ./src --mode 'file' -readme 'none'",
+    "build-tsc": "npm run clean && tsc",
+    "clean": "rm -rf ./dist",
+    "prepublishOnly": "npm run build && npm run docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taicho/liquidity.git"
+  },
+  "author": "Azad Ratzki",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/taicho/liquidity/issues"
+  },
+  "homepage": "https://github.com/taicho/liquidity#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/dat.gui": "^0.7.4",
+    "@types/pixi.js": "^4.8.9",
+    "stats.js": "^0.17.0",
+    "ts-loader": "^6.0.4",
+    "typedoc": "^0.15.0",
+    "typescript": "^3.5.3",
+    "webpack": "^4.39.3",
+    "webpack-cli": "^3.3.7"
+  }
+}

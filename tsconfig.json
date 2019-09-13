@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "outDir": "./dist",        
+        "sourceMap": true,
+        "module": "commonjs",        
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "downlevelIteration": true,
+        "declaration": true,
+        "target": "es5",
+        "resolveJsonModule": true,
+        "lib": [
+          "es2015",  
+          "dom"
+        ]
+    },    
+    "include": [
+        "./src/**/*"
+    ]
+  }
