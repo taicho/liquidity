@@ -5,7 +5,11 @@ const packageJson = require('./package.json');
 
 module.exports = {
     externals: {
-        three: 'PIXI',
+        "pixi.js": {
+            root:"PIXI",
+            commonjs:"pixi.js",
+            commonjs2: "pixi.js"
+        }
     },   
     mode: 'production',
     entry: './src/index.ts',
@@ -25,6 +29,7 @@ module.exports = {
         filename: 'liquidity.js',
         path: path.resolve(__dirname, 'dist'),
         library:'Liquidity',
+        libraryTarget:'umd',
     },
     plugins: [
         new webpack.DefinePlugin({

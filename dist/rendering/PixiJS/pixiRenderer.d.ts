@@ -1,4 +1,4 @@
-/// <reference types="pixi.js" />
+import * as PIXI from 'pixi.js';
 import { Renderer as RendererBase } from '../../base/renderer';
 import { Engine } from '../../engine/engine';
 import { PointInfo } from '../../engine/pointInfo';

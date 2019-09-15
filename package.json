@@ -1,8 +1,8 @@
 {
   "name": "liquidity-particles",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Particle Physics Engine and Renderer",
-  "main": "dist/index.js",
+  "main": "dist/liquidity.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

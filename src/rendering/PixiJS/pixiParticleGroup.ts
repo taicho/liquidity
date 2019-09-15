@@ -1,3 +1,4 @@
+import * as PIXI from 'pixi.js';
 import { ParticleGroup as ParticleGroupBase } from '../../base/particleGroup';
 import { PixiParticle } from './pixiParticle';
 import { PixiRenderer } from './pixiRenderer';

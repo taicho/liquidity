@@ -1,4 +1,4 @@
-/// <reference types="pixi.js" />
+import * as PIXI from 'pixi.js';
 import { Particle as ParticleBase } from '../../base/particle';
 export declare class PixiParticle extends ParticleBase {
     static texture: PIXI.Texture;

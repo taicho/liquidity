@@ -9,7 +9,6 @@
         "downlevelIteration": true,
         "declaration": true,
         "target": "es5",
-        "resolveJsonModule": true,
         "lib": [
           "es2015",  
           "dom"
