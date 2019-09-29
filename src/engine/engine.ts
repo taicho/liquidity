@@ -39,6 +39,7 @@ export class Engine {
     public oldHeight = 0;
     public mode = -1;
     public space = false;
+    protected gridMultiplier = 5.89;
 
     public get particleCount() {
         return this.particles.length;
@@ -60,7 +61,7 @@ export class Engine {
 
     public removeParticle(particle: EngineParticle) {
         const index = this.particles.indexOf(particle);
-        if (index !== undefined) {
+        if (index >= 0) {
             this.particles.splice(index, 1);
         } else {
             throw new Error('Unable to find particle.');
@@ -78,36 +79,48 @@ export class Engine {
         this.particles = newParticles;
     }
 
-    public addParticle() {
-        const particle = new EngineParticle(rand(1, this.gridSizeX - 3), rand(1, this.gridSizeY - 3), 0.0, 0.0);
-        this.particles.push(particle);
+    public createParticle(x?: number, y?: number) {
+        x = x !== undefined ? Math.ceil(x / this.gridMultiplier) : rand(1, this.gridSizeX - 3);
+        y = y !== undefined ? Math.ceil(y / this.gridMultiplier) : rand(1, this.gridSizeY - 3);
+        const particle = new EngineParticle(x, y, 0.0, 0.0);
         return particle;
     }
 
-    public setParticleCount(oldValue: number, newValue: number) {
-        const particleDelta = [];
-        const abs = Math.abs(newValue - oldValue);
-
-        if (newValue > oldValue) {
-            for (let j = 0; j < abs; j++) {
-                const p = this.addParticle();
-                particleDelta.push(p);
-            }
-        } else {
-            for (let j = 0; j < abs; j++) {
-                particleDelta.push(this.particles.pop());
-            }
-        }
-        return particleDelta;
+    public createAndAddParticle() {
+        const particle = this.createParticle();
+        this.addParticle(particle);
+        return particle;
     }
+
+    public addParticle(engineParticle: EngineParticle): this {
+        this.particles.push(engineParticle);
+        return this;
+    }
+
+    // public setParticleCount(oldValue: number, newValue: number) {
+    //     const particleDelta = [];
+    //     const abs = Math.abs(newValue - oldValue);
+
+    //     if (newValue > oldValue) {
+    //         for (let j = 0; j < abs; j++) {
+    //             const p = this.addParticle();
+    //             particleDelta.push(p);
+    //         }
+    //     } else {
+    //         for (let j = 0; j < abs; j++) {
+    //             particleDelta.push(this.particles.pop());
+    //         }
+    //     }
+    //     return particleDelta;
+    // }
 
     public reinit(autoGridSize = true) {
         if (autoGridSize) {
-            this.gridSizeX = Math.ceil(this.viewportWidth / 5.89);
-            this.gridSizeY = Math.ceil(this.viewportHeight / 5.89);
+            this.gridSizeX = Math.ceil(this.viewportWidth / this.gridMultiplier);
+            this.gridSizeY = Math.ceil(this.viewportHeight / this.gridMultiplier);
         }
-        const oldGridX = Math.ceil(this.oldWidth / 5.89);
-        const oldGridY = Math.ceil(this.oldHeight / 5.89);
+        const oldGridX = Math.ceil(this.oldWidth / this.gridMultiplier);
+        const oldGridY = Math.ceil(this.oldHeight / this.gridMultiplier);
 
         const absX = Math.abs(this.gridSizeX - oldGridX);
         const absY = Math.abs(this.gridSizeY - oldGridY);
@@ -147,8 +160,9 @@ export class Engine {
 
     public simulate() {
         const points = this.points;
+        const pointKeys = Object.keys(points);
 
-        for (const name of Object.keys(points)) {
+        for (const name of pointKeys) {
             const info = points[name];
             if (info) {
                 if (info.active && info.activePreviously) {
@@ -169,35 +183,35 @@ export class Engine {
         this.active = [];
         for (let pi = 0, len = this.particles.length; pi < len; pi++) {
             const p = this.particles[pi];
-            p.cX = Math.floor(((p.x - 0.5)));
-            p.cY = Math.floor(((p.y - 0.5)));
+            p.cX = Math.floor(p.x - 0.5);
+            p.cY = Math.floor(p.y - 0.5);
 
             let x = p.cX - p.x;
-            p.pX[0] = (0.5 * x * x + 1.5 * x + 1.125);
-            p.gX[0] = (x + 1.5);
+            p.pX[0] = 0.5 * x * x + 1.5 * x + 1.125;
+            p.gX[0] = x + 1.5;
             x += 1.0;
-            p.pX[1] = (-x * x + 0.75);
-            p.gX[1] = (-2.0 * x);
+            p.pX[1] = -x * x + 0.75;
+            p.gX[1] = -2.0 * x;
             x += 1.0;
-            p.pX[2] = (0.5 * x * x - 1.5 * x + 1.125);
-            p.gX[2] = (x - 1.5);
+            p.pX[2] = 0.5 * x * x - 1.5 * x + 1.125;
+            p.gX[2] = x - 1.5;
 
             let y = p.cY - p.y;
-            p.pY[0] = (0.5 * y * y + 1.5 * y + 1.125);
-            p.gY[0] = (y + 1.5);
+            p.pY[0] = 0.5 * y * y + 1.5 * y + 1.125;
+            p.gY[0] = y + 1.5;
             y += 1.0;
-            p.pY[1] = (-y * y + 0.75);
-            p.gY[1] = (-2.0 * y);
+            p.pY[1] = -y * y + 0.75;
+            p.gY[1] = -2.0 * y;
             y += 1.0;
-            p.pY[2] = (0.5 * y * y - 1.5 * y + 1.125);
-            p.gY[2] = (y - 1.5);
-
+            p.pY[2] = 0.5 * y * y - 1.5 * y + 1.125;
+            p.gY[2] = y - 1.5;
+            const pCX = p.cX;
+            const pCY = p.cY;
             for (let i = 0; i < 3; i++) {
+                const gridI = this.grid[pCX + i];
                 for (let j = 0; j < 3; j++) {
-                    const cxi = Math.floor(p.cX + i);
-                    const cyj = Math.floor(p.cY + j);
-                    const n = this.grid[cxi][cyj];
-                    if (!n.active) {
+                    const n = gridI[pCY + j];
+                    if (n.active === false) {
                         this.active.push(n);
                         n.active = true;
                     }
@@ -227,9 +241,12 @@ export class Engine {
             let dudy = 0.0;
             let dvdx = 0.0;
             let dvdy = 0.0;
+            const pCX = p.cX;
+            const pCY = p.cY;
             for (let i = 0; i < 3; i++) {
+                const gridI = this.grid[pCX + i];
                 for (let j = 0; j < 3; j++) {
-                    const n = this.grid[Math.floor((p.cX + i))][Math.floor((p.cY + j))];
+                    const n = gridI[pCY + j];
                     const gx = p.gX[i] * p.pY[j];
                     const gy = p.pX[i] * p.gY[j];
                     dudx += n.u * gx;
@@ -261,19 +278,24 @@ export class Engine {
             const cy = Math.floor(p.y);
             const cxi = Math.floor(cx + 1);
             const cyi = Math.floor(cy + 1);
-
-            const p00 = this.grid[cx][cy].m;
-            const x00 = this.grid[cx][cy].gX;
-            const y00 = this.grid[cx][cy].gY;
-            const p01 = this.grid[cx][cyi].m;
-            const x01 = this.grid[cx][cyi].gX;
-            const y01 = this.grid[cx][cyi].gY;
-            const p10 = this.grid[cxi][cy].m;
-            const x10 = this.grid[cxi][cy].gX;
-            const y10 = this.grid[cxi][cy].gY;
-            const p11 = this.grid[cxi][cyi].m;
-            const x11 = this.grid[cxi][cyi].gX;
-            const y11 = this.grid[cxi][cyi].gY;
+            const gridCX = this.grid[cx];
+            const gridCXCY = gridCX[cy];
+            const gridCXCYI = gridCX[cyi];
+            const gridCXI = this.grid[cxi];
+            const gridCXICY = gridCXI[cy];
+            const gridCXICYI = gridCXI[cyi];
+            const p00 = gridCXCY.m;
+            const x00 = gridCXCY.gX;
+            const y00 = gridCXCY.gY;
+            const p01 = gridCXCYI.m;
+            const x01 = gridCXCYI.gX;
+            const y01 = gridCXCYI.gY;
+            const p10 = gridCXICY.m;
+            const x10 = gridCXICY.gX;
+            const y10 = gridCXICY.gY;
+            const p11 = gridCXICYI.m;
+            const x11 = gridCXICYI.gX;
+            const y11 = gridCXICYI.gY;
 
             const pdx = p10 - p00;
             const pdy = p01 - p00;
@@ -322,8 +344,9 @@ export class Engine {
             const T11 = this.elasticity * p.force2 + this.viscosity * D11 + pressure + this.bulkViscosity * trace;
 
             for (let i = 0; i < 3; i++) {
+                const gridI = this.grid[pCX + i];
                 for (let j = 0; j < 3; j++) {
-                    const n = this.grid[Math.floor((p.cX + i))][Math.floor((p.cY + j))];
+                    const n = gridI[pCY + j];
                     const phi = p.pX[i] * p.pY[j];
                     const dx = p.gX[i] * p.pY[j];
                     const dy = p.pX[i] * p.gY[j];
@@ -348,15 +371,16 @@ export class Engine {
         for (let pi = 0, len = this.particles.length; pi < len; pi++) {
             const p = this.particles[pi];
             for (let i = 0; i < 3; i++) {
+                const gridI = this.grid[p.cX + i];
                 for (let j = 0; j < 3; j++) {
-                    const n = this.grid[Math.floor((p.cX + i))][Math.floor((p.cY + j))];
+                    const n = gridI[p.cY + j];
                     const phi = p.pX[i] * p.pY[j];
                     p.u += phi * n.aX;
                     p.v += phi * n.aY;
                 }
             }
             p.v += (this.gravity + p.individualGravity);
-            for (const name of Object.keys(points)) {
+            for (const name of pointKeys) {
                 const info = points[name];
                 const size = info!.size || 10.0;
                 if (info) {
@@ -385,9 +409,12 @@ export class Engine {
             } else if (y > this.gridSizeY - 3) {
                 p.v += this.gridSizeY - 3 - y - Math.random() * 0.01;
             }
+            const pCX = p.cX;
+            const pCY = p.cY;
             for (let i = 0; i < 3; i++) {
+                const gridI = this.grid[pCX + i];
                 for (let j = 0; j < 3; j++) {
-                    const n = this.grid[Math.floor((p.cX + i))][Math.floor((p.cY + j))];
+                    const n = gridI[pCY + j];
                     const phi = p.pX[i] * p.pY[j];
                     n.u += phi * p.u;
                     n.v += phi * p.v;
@@ -405,8 +432,9 @@ export class Engine {
             const p = this.particles[pi];
             let gu = 0.0; let gv = 0.0;
             for (let i = 0; i < 3; i++) {
+                const gridI = this.grid[p.cX + i];
                 for (let j = 0; j < 3; j++) {
-                    const n = this.grid[Math.floor((p.cX + i))][Math.floor((p.cY + j))];
+                    const n = gridI[p.cY + j];
                     const phi = p.pX[i] * p.pY[j];
                     gu += phi * n.u;
                     gv += phi * n.v;
@@ -415,21 +443,19 @@ export class Engine {
 
             p.gU = gu;
             p.gV = gv;
-
             p.x += gu;
             p.y += gv;
             p.u += this.smoothing * (gu - p.u);
             p.v += this.smoothing * (gv - p.v);
         }
-        const keys = Object.keys(points);
-        keys.forEach((key) => {
-            const info = points[key];
+        for (const name of pointKeys) {
+            const info = points[name];
             if (info) {
                 if (info.autoRemove) {
-                    points[key] = undefined;
+                    points[name] = undefined;
                 }
             }
-        });
+        }
     }
 
     private buildGrid() {

@@ -1,4 +1,5 @@
 import { getId } from '../utilities';
+import { Node } from './node';
 
 export class EngineParticle {
     public id = getId();
@@ -19,21 +20,11 @@ export class EngineParticle {
     public pY: [number, number, number] = [0, 0, 0];
     public gX: [number, number, number] = [0, 0, 0];
     public gY: [number, number, number] = [0, 0, 0];
-    public dead = false;
-    public broken = false;
-    public decaying = false;
-    public life = 1.0;
-    public decayRate = 0.05;
 
     constructor(x: number, y: number, u: number, v: number) {
         this.x = x;
         this.y = y;
         this.u = u;
         this.v = v;
-    }
-
-    public revive() {
-        this.life = 1.0;
-        this.dead = false;
     }
 }

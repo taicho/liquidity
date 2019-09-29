@@ -38,13 +38,15 @@ export declare class Engine {
     oldHeight: number;
     mode: number;
     space: boolean;
+    protected gridMultiplier: number;
     readonly particleCount: number;
     constructor(viewportWidth: number, viewportHeight: number);
     addPointInfo(name: string, info: PointInfo): void;
     removeParticle(particle: EngineParticle): void;
     removeParticles(particles: EngineParticle[]): void;
-    addParticle(): EngineParticle;
-    setParticleCount(oldValue: number, newValue: number): (EngineParticle | undefined)[];
+    createParticle(x?: number, y?: number): EngineParticle;
+    createAndAddParticle(): EngineParticle;
+    addParticle(engineParticle: EngineParticle): this;
     reinit(autoGridSize?: boolean): void;
     init(): void;
     simulate(): void;

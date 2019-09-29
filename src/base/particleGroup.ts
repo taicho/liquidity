@@ -83,7 +83,7 @@ export abstract class ParticleGroup<TParticle extends Particle = Particle> {
      */
     public addParticle(particle: TParticle) {
         particle.parent = this;
-        const engineParticle = particle.engineParticle || this.renderer.engine.addParticle();
+        const engineParticle = particle.engineParticle || this.renderer.engine.createAndAddParticle();
         particle.engineParticle = engineParticle;
         this.particles.push(particle);
     }
@@ -146,8 +146,9 @@ export abstract class ParticleGroup<TParticle extends Particle = Particle> {
      * @memberof ParticleGroup
      */
     public draw() {
-        for (const particle of this.particles) {
-            particle.draw();
+        // tslint:disable-next-line: prefer-for-of
+        for (let i = 0; i < this.particles.length; i++) {
+            this.particles[i].draw();
         }
     }
 }

@@ -29,16 +29,90 @@
     <script src="./scripts/stats.min.js"></script>
     <script src="./scripts/pixi.min.js"></script>
     <script src="../../dist/liquidity.js"></script>
-    <script>        
+    <script>
+        let renderer;
+        let engine;
+        let viewportWidth;
+        let viewportHeight;
+        let keyTimer;
+        let lastGroup;
+        let chars = '';
+
+        function drawString(str, height, width) {
+            const canvasHeight = height * 2;
+            const canvas = document.createElement('canvas');
+            canvas.width = width || 1;
+            canvas.height = canvasHeight;
+            const context = canvas.getContext('2d');
+            context.font = `${height}px Arial`;
+            if (!width) {
+                const widthDynamic = context.measureText(str);
+                width = Math.floor(widthDynamic.width);
+                canvas.width = width;
+                context.clearRect(0, 0, width, height);
+            }
+            context.font = `${height}px Arial`;
+            context.fillStyle = 'white';
+            context.fillText(str, 0, height, width);
+            return canvas;
+        }
+
+        function getRandomInt(min, max) {
+            //The maximum is exclusive and the minimum is inclusive
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min)) + min;
+        }
+
+        function getColorIndicesForCoord(x, y, width) {
+            var red = y * (width * 4) + x * 4;
+            return [red, red + 1, red + 2, red + 3];
+        }
+
+        function renderString(offsetX, offsetY, str, particleCount, color = 0xFF0000, addTime = 5000) {
+            const canvas = drawString(str, 200);
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            const context = canvas.getContext('2d');
+            const imageData = context.getImageData(0, 0, canvasWidth, canvasHeight).data;
+            const group = renderer.createParticleGroup();
+            group.blur = 5;
+            group.tint = color;
+            for (let i = 0; i < particleCount; i++) {
+                let found = false;
+                while (!found) {
+                    const randomX = getRandomInt(0, canvasWidth);
+                    const randomY = getRandomInt(0, canvasHeight);
+                    const colorIndices = getColorIndicesForCoord(randomX, randomY, canvasWidth);
+                    const alpha = imageData[colorIndices[3]];
+                    if (alpha !== 0) {
+                        found = true;
+                        let x = offsetX + randomX;
+                        let y = offsetY + randomY;
+                        const engineParticle = engine.createParticle(x, y);
+                        engineParticle.ignore = true;
+                        const particle = group.createParticle();
+                        particle.engineParticle = engineParticle;
+                        group.addParticle(particle);
+                    }
+                }
+            }
+            renderer.addGroup(group);
+
+            return group;
+        }
+
         function initialize() {
             const canvas = document.querySelector('#mainCanvas');
             const bounds = canvas.getBoundingClientRect();
-            const engine = new Liquidity.Engine.Engine(bounds.width, bounds.height);
+            viewportWidth = bounds.width;
+            viewportHeight = bounds.height;
+            engine = new Liquidity.Engine.Engine(viewportWidth, viewportHeight);
             engine.init();
-            const renderer = new Liquidity.Rendering.PixiJS.PixiRenderer(engine, canvas);
-            const optionsController = new Liquidity.Misc.OptionsController(renderer, canvas, new dat.GUI());  
-            optionsController.generator.generate(5000,0x0000FF,10);          
-            optionsController.generator.generate(5000,0x00FFFF,10);
+            renderer = new Liquidity.Rendering.PixiJS.PixiRenderer(engine, canvas);
+            const optionsController = new Liquidity.Misc.OptionsController(renderer, canvas, new dat.GUI());
+            optionsController.generator.generate(5000, 0x0000FF, 10);
+            optionsController.generator.generate(5000, 0x00FFFF, 10);
             const stats = new Stats();
             stats.showPanel(0);
             stats.dom.style.left = '0';
@@ -48,11 +122,36 @@
                 window.requestAnimationFrame(() => {
                     render();
                 });
-                stats.begin();                              
-                renderer.render();    
-                stats.end();            
+                stats.begin();
+                renderer.render();
+                stats.end();
             }
             render();
+            document.body.addEventListener('keyup', (e) => {
+                let time = 5000;
+                clearTimeout(keyTimer);
+                if (lastGroup) {
+                    renderer.removeGroup(lastGroup);
+                }
+                if (e.key && e.key.length === 1) {
+                    chars += e.key;
+                } else if(e.key === 'Backspace') {
+                    chars = chars.slice(0,chars.length - 1);
+                }
+                if (chars) {
+                    lastGroup = renderString(200, 200, chars, 1000, 0xFFFFFF, time);
+                }
+                keyTimer = setTimeout(() => {
+                    let group = lastGroup;
+                    for (let i = 0; i < group.particles.length; i++) {
+                        let particle = group.particles[i];
+                        particle.engineParticle.ignore = false;
+                        engine.addParticle(particle.engineParticle);
+                    }
+                    chars = '';
+                    lastGroup = null;
+                }, time);
+            });
         }
         initialize();
     </script>

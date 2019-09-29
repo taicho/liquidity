@@ -76,7 +76,9 @@ export abstract class Renderer<TParticleGroup extends ParticleGroup = ParticleGr
      */
     public removeGroup(group: TParticleGroup) {
         const index = this.groups.indexOf(group);
-        this.groups.splice(index, 1);
+        if (index >= 0) {
+            this.groups.splice(index, 1);
+        }
     }
 
     /**
