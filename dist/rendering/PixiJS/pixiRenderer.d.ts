@@ -11,6 +11,7 @@ export declare class PixiRenderer extends RendererBase<PixiParticleGroup> {
     lastGraphic: any;
     canvas: HTMLCanvasElement;
     constructor(engine: Engine, canvasElement?: HTMLCanvasElement);
+    private setupInteraction;
     setBlurForContainer(c: PIXI.Container, value: number): void;
     setBlur(value: number): void;
     setSmokeGravity(): void;
@@ -18,7 +19,10 @@ export declare class PixiRenderer extends RendererBase<PixiParticleGroup> {
     addGroup(group: PixiParticleGroup): void;
     removeGroup(container: PixiParticleGroup): void;
     render(simulate?: boolean): void;
-    getMousePosition(canvas: HTMLCanvasElement, event: MouseEvent): {
+    getRelativePosition(canvas: HTMLCanvasElement, vector: {
+        x: number;
+        y: number;
+    }): {
         x: number;
         y: number;
     };

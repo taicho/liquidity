@@ -147,8 +147,9 @@ export abstract class ParticleGroup<TParticle extends Particle = Particle> {
      */
     public draw() {
         // tslint:disable-next-line: prefer-for-of
-        for (let i = 0; i < this.particles.length; i++) {
-            this.particles[i].draw();
+        let particles = this.particles;
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].draw();
         }
     }
 }

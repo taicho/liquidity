@@ -39,6 +39,7 @@ export declare class Engine {
     mode: number;
     space: boolean;
     protected gridMultiplier: number;
+    protected pointKeys: string[];
     readonly particleCount: number;
     constructor(viewportWidth: number, viewportHeight: number);
     addPointInfo(name: string, info: PointInfo): void;

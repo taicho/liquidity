@@ -40,6 +40,7 @@ export class Engine {
     public mode = -1;
     public space = false;
     protected gridMultiplier = 5.89;
+    protected pointKeys : string[] = [];
 
     public get particleCount() {
         return this.particles.length;
@@ -57,6 +58,7 @@ export class Engine {
 
     public addPointInfo(name: string, info: PointInfo) {
         this.points[name] = info;
+        this.pointKeys = Object.keys(this.points);
     }
 
     public removeParticle(particle: EngineParticle) {
@@ -158,16 +160,32 @@ export class Engine {
         this.buildGrid();
     }
 
-    public simulate() {
+    public simulate() {        
         const points = this.points;
-        const pointKeys = Object.keys(points);
+        const pointKeys = this.pointKeys;
+        const influenceMultiplier = this.influenceMultiplier;
+        const particles = this.particles;
+        const grid = this.grid;
+        let active = this.active;
+        const yieldRate = this.yieldRate;
+        const stiffness= this.stiffness;
+        const gravity = this.gravity;   
+        const currentDensity = this.density;
+        const gridSizeX = this.gridSizeX;
+        const gridSizeY = this.gridSizeY;
+        const elasticity = this.elasticity;
+        const viscosity = this.viscosity;
+        const bulkViscosity = this.bulkViscosity;
+        const smoothing = this.smoothing;
+        const mode = this.mode;     
+        
 
         for (const name of pointKeys) {
             const info = points[name];
             if (info) {
                 if (info.active && info.activePreviously) {
-                    info.calculatedX = (info.x! - info.previousX!) / this.influenceMultiplier;
-                    info.calculatedY = (info.y! - info.previousY!) / this.influenceMultiplier;
+                    info.calculatedX = (info.x! - info.previousX!) / influenceMultiplier;
+                    info.calculatedY = (info.y! - info.previousY!) / influenceMultiplier;
                 }
                 info.activePreviously = info.active;
                 info.previousX = info.x;
@@ -175,14 +193,15 @@ export class Engine {
             }
         }
 
-        for (let ai = 0, len = this.active.length; ai < len; ai++) {
-            const n = this.active[ai];
+        for (let ai = 0, len = active.length; ai < len; ai++) {
+            const n = active[ai];
             n.m = (n.gX = n.gY = n.u = n.v = n.aX = n.aY = 0.0);
             n.active = false;
         }
         this.active = [];
-        for (let pi = 0, len = this.particles.length; pi < len; pi++) {
-            const p = this.particles[pi];
+        active = this.active;
+        for (let pi = 0, len = particles.length; pi < len; pi++) {
+            const p = particles[pi];
             p.cX = Math.floor(p.x - 0.5);
             p.cY = Math.floor(p.y - 0.5);
 
@@ -208,11 +227,11 @@ export class Engine {
             const pCX = p.cX;
             const pCY = p.cY;
             for (let i = 0; i < 3; i++) {
-                const gridI = this.grid[pCX + i];
+                const gridI = grid[pCX + i];
                 for (let j = 0; j < 3; j++) {
                     const n = gridI[pCY + j];
                     if (n.active === false) {
-                        this.active.push(n);
+                        active.push(n);
                         n.active = true;
                     }
                     const phi = p.pX[i] * p.pY[j];
@@ -227,28 +246,32 @@ export class Engine {
             }
         }
 
-        for (let ai = 0, len = this.active.length; ai < len; ai++) {
-            const n = this.active[ai];
+        for (let ai = 0, len = active.length; ai < len; ai++) {
+            const n = active[ai];
             if (n.m > 0.0) {
                 n.u /= n.m;
                 n.v /= n.m;
             }
         }
 
-        for (let pi = 0, len = this.particles.length; pi < len; pi++) {
-            const p = this.particles[pi];
+        for (let pi = 0, len = particles.length; pi < len; pi++) {
+            const p = particles[pi];
             let dudx = 0.0;
             let dudy = 0.0;
             let dvdx = 0.0;
             let dvdy = 0.0;
             const pCX = p.cX;
             const pCY = p.cY;
+            const pGX = p.gX;
+            const pGY = p.gY;
+            const pPX = p.pX;
+            const pPY = p.pY;
             for (let i = 0; i < 3; i++) {
-                const gridI = this.grid[pCX + i];
+                const gridI = grid[pCX + i];
                 for (let j = 0; j < 3; j++) {
                     const n = gridI[pCY + j];
-                    const gx = p.gX[i] * p.pY[j];
-                    const gy = p.pX[i] * p.gY[j];
+                    const gx = pGX[i] * pPY[j];
+                    const gy = pPX[i] * pGY[j];
                     dudx += n.u * gx;
                     dudy += n.u * gy;
                     dvdx += n.v * gx;
@@ -265,12 +288,12 @@ export class Engine {
             let trace = 0.5 * (D00 + D11);
             D00 -= trace;
             D11 -= trace;
-            p.force0 += -wT0 + D00 - this.yieldRate * p.force0;
-            p.force1 += wT1 + D01 - this.yieldRate * p.force1;
-            p.force2 += wT0 + D11 - this.yieldRate * p.force2;
+            p.force0 += -wT0 + D00 - yieldRate * p.force0;
+            p.force1 += wT1 + D01 - yieldRate * p.force1;
+            p.force2 += wT0 + D11 - yieldRate * p.force2;
 
             const norm = p.force0 * p.force0 + 2.0 * p.force1 * p.force1 + p.force2 * p.force2;
-            if ((this.mode > -1) || (norm > 5.0)) {
+            if ((mode > -1) || (norm > 5.0)) {
                 p.force0 = (p.force1 = p.force2 = 0.0);
             }
 
@@ -278,10 +301,10 @@ export class Engine {
             const cy = Math.floor(p.y);
             const cxi = Math.floor(cx + 1);
             const cyi = Math.floor(cy + 1);
-            const gridCX = this.grid[cx];
+            const gridCX = grid[cx];
             const gridCXCY = gridCX[cy];
             const gridCXCYI = gridCX[cyi];
-            const gridCXI = this.grid[cxi];
+            const gridCXI = grid[cxi];
             const gridCXICY = gridCXI[cy];
             const gridCXICYI = gridCXI[cyi];
             const p00 = gridCXCY.m;
@@ -320,8 +343,8 @@ export class Engine {
             const density = p00 + x00 * u + y00 * v + C20 * u2 + C02 * v2 +
                 C30 * u3 + C03 * v3 + C21 * u2 * v + C31 * u3 * v + C12 *
                 u * v2 + C13 * u * v3 + C11 * u * v;
-            let pressure = (this.stiffness + p.stiffness) / Math.max(1.0, this.density) * (
-                density - this.density);
+            let pressure = (stiffness + p.stiffness) / Math.max(1.0, currentDensity) * (
+                density - currentDensity);
             if (pressure > 2.0) {
                 pressure = 2.0;
             }
@@ -329,27 +352,27 @@ export class Engine {
             let fx = 0.0; let fy = 0.0;
             if (p.x < 3.0) {
                 fx += 3.0 - p.x;
-            } else if (p.x > this.gridSizeX - 4) {
-                fx += this.gridSizeX - 4 - p.x;
+            } else if (p.x > gridSizeX - 4) {
+                fx += gridSizeX - 4 - p.x;
             }
             if (p.y < 3.0) {
                 fy += 3.0 - p.y;
-            } else if (p.y > this.gridSizeY - 4) {
-                fy += this.gridSizeY - 4 - p.y;
+            } else if (p.y > gridSizeY - 4) {
+                fy += gridSizeY - 4 - p.y;
             }
 
-            trace *= this.stiffness + p.stiffness;
-            const T00 = this.elasticity * p.force0 + this.viscosity * D00 + pressure + this.bulkViscosity * trace;
-            const T01 = this.elasticity * p.force1 + this.viscosity * D01;
-            const T11 = this.elasticity * p.force2 + this.viscosity * D11 + pressure + this.bulkViscosity * trace;
+            trace *= stiffness + p.stiffness;
+            const T00 = elasticity * p.force0 + viscosity * D00 + pressure + bulkViscosity * trace;
+            const T01 = elasticity * p.force1 + viscosity * D01;
+            const T11 = elasticity * p.force2 + viscosity * D11 + pressure + bulkViscosity * trace;
 
             for (let i = 0; i < 3; i++) {
-                const gridI = this.grid[pCX + i];
+                const gridI = grid[pCX + i];
                 for (let j = 0; j < 3; j++) {
                     const n = gridI[pCY + j];
-                    const phi = p.pX[i] * p.pY[j];
-                    const dx = p.gX[i] * p.pY[j];
-                    const dy = p.pX[i] * p.gY[j];
+                    const phi = pPX[i] * pPY[j];
+                    const dx = pGX[i] * pPY[j];
+                    const dy = pPX[i] * pGY[j];
 
                     n.aX += -(dx * T00 + dy * T01) + fx * phi;
                     n.aY += -(dx * T01 + dy * T11) + fy * phi;
@@ -357,8 +380,8 @@ export class Engine {
             }
         }
 
-        for (let ai = 0, len = this.active.length; ai < len; ai++) {
-            const n = this.active[ai];
+        for (let ai = 0, len = active.length; ai < len; ai++) {
+            const n = active[ai];
             if (n.m > 0.0) {
                 n.aX /= n.m;
                 n.aY /= n.m;
@@ -368,10 +391,10 @@ export class Engine {
         }
         const currentParticles: EngineParticle[] = [];
         this.currentParticles = currentParticles;
-        for (let pi = 0, len = this.particles.length; pi < len; pi++) {
-            const p = this.particles[pi];
+        for (let pi = 0, len = particles.length; pi < len; pi++) {
+            const p = particles[pi];
             for (let i = 0; i < 3; i++) {
-                const gridI = this.grid[p.cX + i];
+                const gridI = grid[p.cX + i];
                 for (let j = 0; j < 3; j++) {
                     const n = gridI[p.cY + j];
                     const phi = p.pX[i] * p.pY[j];
@@ -379,15 +402,15 @@ export class Engine {
                     p.v += phi * n.aY;
                 }
             }
-            p.v += (this.gravity + p.individualGravity);
+            p.v += (gravity + p.individualGravity);
             for (const name of pointKeys) {
                 const info = points[name];
                 const size = info!.size || 10.0;
                 if (info) {
                     info.active = info.activePreviously;
                     if (info.active) {
-                        const vx = Math.abs(p.x - info.x! / this.influenceMultiplier);
-                        const vy = Math.abs(p.y - info.y! / this.influenceMultiplier);
+                        const vx = Math.abs(p.x - info.x! / influenceMultiplier);
+                        const vy = Math.abs(p.y - info.y! / influenceMultiplier);
                         if ((vx < size) && (vy < size)) {
                             const weight = (1.0 - vx / size) * (1.0 - vy / size);
                             p.u += weight * (info.calculatedX! - p.u);
@@ -401,18 +424,18 @@ export class Engine {
             const y = p.y + p.v;
             if (x < 2.0) {
                 p.u += 2.0 - x + Math.random() * 0.01;
-            } else if (x > this.gridSizeX - 3) {
-                p.u += this.gridSizeX - 3 - x - Math.random() * 0.01;
+            } else if (x > gridSizeX - 3) {
+                p.u += gridSizeX - 3 - x - Math.random() * 0.01;
             }
             if (y < 2.0) {
                 p.v += 2.0 - y + Math.random() * 0.01;
-            } else if (y > this.gridSizeY - 3) {
-                p.v += this.gridSizeY - 3 - y - Math.random() * 0.01;
+            } else if (y > gridSizeY - 3) {
+                p.v += gridSizeY - 3 - y - Math.random() * 0.01;
             }
             const pCX = p.cX;
             const pCY = p.cY;
             for (let i = 0; i < 3; i++) {
-                const gridI = this.grid[pCX + i];
+                const gridI = grid[pCX + i];
                 for (let j = 0; j < 3; j++) {
                     const n = gridI[pCY + j];
                     const phi = p.pX[i] * p.pY[j];
@@ -421,18 +444,18 @@ export class Engine {
                 }
             }
         }
-        for (let ai = 0, len = this.active.length; ai < len; ai++) {
-            const n = this.active[ai];
+        for (let ai = 0, len = active.length; ai < len; ai++) {
+            const n = active[ai];
             if (n.m > 0.0) {
                 n.u /= n.m;
                 n.v /= n.m;
             }
         }
-        for (let pi = 0, len = this.particles.length; pi < len; pi++) {
-            const p = this.particles[pi];
+        for (let pi = 0, len = particles.length; pi < len; pi++) {
+            const p = particles[pi];
             let gu = 0.0; let gv = 0.0;
             for (let i = 0; i < 3; i++) {
-                const gridI = this.grid[p.cX + i];
+                const gridI = grid[p.cX + i];
                 for (let j = 0; j < 3; j++) {
                     const n = gridI[p.cY + j];
                     const phi = p.pX[i] * p.pY[j];
@@ -445,17 +468,17 @@ export class Engine {
             p.gV = gv;
             p.x += gu;
             p.y += gv;
-            p.u += this.smoothing * (gu - p.u);
-            p.v += this.smoothing * (gv - p.v);
+            p.u += smoothing * (gu - p.u);
+            p.v += smoothing * (gv - p.v);
         }
-        for (const name of pointKeys) {
-            const info = points[name];
-            if (info) {
-                if (info.autoRemove) {
-                    points[name] = undefined;
-                }
-            }
-        }
+        // for (const name of pointKeys) {
+        //     const info = points[name];
+        //     if (info) {
+        //         if (info.autoRemove) {
+        //             points[name] = undefined;
+        //         }
+        //     }
+        // }
     }
 
     private buildGrid() {

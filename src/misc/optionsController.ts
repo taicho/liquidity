@@ -84,6 +84,8 @@ export class OptionsController {
         this.gui = gui;
         this.canvas = canvas;
         this.contrast = this.contrast;
+        const version = {version: '2.3.13'};
+        gui.add(version,'version');
         const items: GuiItem[] = [
             new GuiItem(this.renderer.engine, 'particleCount', 'Particle Count', undefined, undefined, undefined, true),
             new GuiItem(this.renderer, 'globalParticleWidth', 'Particle Width', 2, 100),
